@@ -3,6 +3,9 @@ import { onMounted, computed, ref, watch } from 'vue';
 import { useDataStore } from '@/stores/data'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
+import { useSwipe } from '@vueuse/core'
+
+
 const router = useRouter();
 const props = defineProps({
     videoIdx: {
@@ -12,10 +15,6 @@ const props = defineProps({
 
 const dataStore = useDataStore()
 const { videoList, currentVideoIdx } = storeToRefs(dataStore);
-
-if(props.videoIdx){
-    // currentVideoIdx.value = props.videoIdx;
-}
 
 const videoData = computed(() => {
     return videoList.value[currentVideoIdx.value];
@@ -28,12 +27,12 @@ const videoData = computed(() => {
 //     return currentVideoIdx.value && currentVideoIdx.value < videoList.value.length;
 // })
 
-const setNextVideoIdx = (numb)=>{
+const setNextVideoIdx = (numb) => {
     isPlaying.value = null;
     currentVideoIdx.value += numb;
-    if(currentVideoIdx.value < 0){
-        currentVideoIdx.value = videoList.value.length-1;
-    }else if(currentVideoIdx.value >= videoList.value.length){
+    if (currentVideoIdx.value < 0) {
+        currentVideoIdx.value = videoList.value.length - 1;
+    } else if (currentVideoIdx.value >= videoList.value.length) {
         currentVideoIdx.value = 0;
     }
     router.push(`/video/${currentVideoIdx.value}`)
@@ -47,11 +46,11 @@ onMounted(() => {
     initVimeoPlayer();
 })
 
-watch(currentVideoIdx, ()=>{
+watch(currentVideoIdx, () => {
     initVimeoPlayer();
 })
 
-const initVimeoPlayer = ()=>{
+const initVimeoPlayer = () => {
     player = new Vimeo.Player(vimeoIframe.value);
 
     // player.ready().then(function() {
@@ -93,10 +92,27 @@ const fullscreenVideo = () => {
 
 }
 
+const pageTranslateX = ref(0);
+const swipeTarget = ref(null);
+const { direction, isSwiping, lengthX, lengthY } = useSwipe(swipeTarget, {
+    onSwipe(){
+        if(isSwiping.value){
+            pageTranslateX.value = lengthX.value * -1;
+        }
+    },
+    onSwipeEnd(){
+        if(pageTranslateX.value > 0){
+            setNextVideoIdx(-1);
+        }else{
+            setNextVideoIdx(1);
+        }
+        pageTranslateX.value = 0;
+    }
+})
 
 </script>
 <template>
-    <v-layout class="w-full h-full">
+    <v-layout class="w-full h-full" ref="swipeTarget" :style="{transform: `translateX(${pageTranslateX}px)`}">
         <v-app-bar color="" density="compact">
             <template v-slot:prepend>
                 <v-app-bar-nav-icon @click="router.push('/')">
@@ -105,7 +121,7 @@ const fullscreenVideo = () => {
 
             </template>
 
-            <v-app-bar-title>{{ videoData.title }}</v-app-bar-title>
+            <v-app-bar-title>{{ videoData.title }} <span class='text-subtitle-2'>({{ currentVideoIdx+1 }} / {{ videoList.length }})</span></v-app-bar-title>
 
             <!-- <template v-slot:append>
                 <v-btn icon="mdi-dots-vertical"></v-btn>
@@ -126,11 +142,11 @@ const fullscreenVideo = () => {
             </v-btn>
 
             <v-spacer />
-            <v-btn v-if='!isPlaying' :disabled="isPlaying===null" @click="playVideo(true)">
+            <v-btn v-if='!isPlaying' :disabled="isPlaying === null" @click="playVideo(true)">
                 <v-icon icon="mdi-play"></v-icon>
                 재생
             </v-btn>
-            <v-btn v-else-if="isPlaying" :disabled="isPlaying===null" @click="playVideo(false)">
+            <v-btn v-else-if="isPlaying" :disabled="isPlaying === null" @click="playVideo(false)">
                 <v-icon icon="mdi-pause"></v-icon>
                 일시정지
             </v-btn>
