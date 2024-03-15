@@ -3,6 +3,7 @@
 #app {
   width: 100vw;
   height: 100vh;
+  max-width: 800px;
   margin: 0 auto;
   padding: 0;
   font-weight: normal;
