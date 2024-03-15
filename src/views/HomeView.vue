@@ -28,8 +28,8 @@ const { getVideosByTitles } = dataStore;
             <v-container fluid>
                 <div v-for="(title, titleIdx) in videoTitles" :key="titleIdx">
                     <div class="pl-3 mb-3 mt-4 text-subtitle-2">{{title}}</div>
-                    <div class="flex">
-                        <v-card class="mx-3 pb-3" max-width="344" elevated v-for="(video, videoIdx) in getVideosByTitles(title)"
+                    <div class="flex flex-wrap">
+                        <v-card class="mx-3 pb-3 w-2/5" elevated v-for="(video, videoIdx) in getVideosByTitles(title)"
                             :key="videoIdx"
                             @click="router.push(`/video/${videoIdx}`)"
                         >
