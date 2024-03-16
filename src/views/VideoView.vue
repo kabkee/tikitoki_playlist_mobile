@@ -29,7 +29,7 @@ const videoData = computed(() => {
 
 const setNextVideoIdx = (numb) => {
     isPlaying.value = null;
-    currentVideoIdx.value += numb;
+    currentVideoIdx.value += parseInt(numb);
     if (currentVideoIdx.value < 0) {
         currentVideoIdx.value = videoList.value.length - 1;
     } else if (currentVideoIdx.value >= videoList.value.length) {
@@ -42,7 +42,10 @@ const vimeoIframe = ref(null);
 const isPlaying = ref(null);
 let player;
 
+
 onMounted(() => {
+    currentVideoIdx.value = parseInt(props.videoIdx);
+    console.info('currentVideoIdx.value', currentVideoIdx.value)
     initVimeoPlayer();
 })
 
