@@ -3,8 +3,7 @@ import { onMounted, computed, ref, watch } from 'vue';
 import { useDataStore } from '@/stores/data'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
-import { useSwipe } from '@vueuse/core'
-
+import { set, useSwipe, useStorage } from '@vueuse/core'
 
 const router = useRouter();
 const props = defineProps({
@@ -14,7 +13,10 @@ const props = defineProps({
 })
 
 const dataStore = useDataStore()
-const { videoList, currentVideoIdx } = storeToRefs(dataStore);
+const { videoList, videoRepeatOnce, currentVideoIdx } = storeToRefs(dataStore);
+
+const storageVideoRepeatOnce = useStorage("videoRepeatOnce", false);
+videoRepeatOnce.value = storageVideoRepeatOnce.value;
 
 const videoData = computed(() => {
     return videoList.value[currentVideoIdx.value];
@@ -45,13 +47,15 @@ let player;
 
 onMounted(() => {
     currentVideoIdx.value = parseInt(props.videoIdx);
-    console.info('currentVideoIdx.value', currentVideoIdx.value)
-    initVimeoPlayer();
+    setTimeout(() => {
+        initVimeoPlayer();
+    }, 500)
 })
 
 watch(currentVideoIdx, () => {
     initVimeoPlayer();
 })
+
 
 const initVimeoPlayer = () => {
     player = new Vimeo.Player(vimeoIframe.value);
@@ -62,7 +66,7 @@ const initVimeoPlayer = () => {
     player.on('play', function () {
         // console.log('Played the video');
         isPlaying.value = true;
-        fullscreenVideo();
+        onClickFullscreen();
     });
 
     player.on('pause', function () {
@@ -86,7 +90,7 @@ const playVideo = (setPlaying) => {
     isPlaying.value = setPlaying;
 }
 
-const fullscreenVideo = () => {
+const onClickFullscreen = () => {
     player.requestFullscreen().then(function () {
         // the player entered fullscreen
     }).catch(function (error) {
@@ -95,18 +99,23 @@ const fullscreenVideo = () => {
 
 }
 
+const onClickRepeat = () => {
+    videoRepeatOnce.value = !videoRepeatOnce.value;
+    storageVideoRepeatOnce.value = videoRepeatOnce.value;
+}
+
 const pageTranslateX = ref(0);
 const swipeTarget = ref(null);
 const { direction, isSwiping, lengthX, lengthY } = useSwipe(swipeTarget, {
-    onSwipe(){
-        if(isSwiping.value){
+    onSwipe() {
+        if (isSwiping.value) {
             pageTranslateX.value = lengthX.value * -1;
         }
     },
-    onSwipeEnd(){
-        if(pageTranslateX.value > 0){
+    onSwipeEnd() {
+        if (pageTranslateX.value > 0) {
             setNextVideoIdx(-1);
-        }else{
+        } else {
             setNextVideoIdx(1);
         }
         pageTranslateX.value = 0;
@@ -115,7 +124,7 @@ const { direction, isSwiping, lengthX, lengthY } = useSwipe(swipeTarget, {
 
 </script>
 <template>
-    <v-layout class="w-full h-full" ref="swipeTarget" :style="{transform: `translateX(${pageTranslateX}px)`}">
+    <v-layout class="w-full h-full" ref="swipeTarget" :style="{ transform: `translateX(${pageTranslateX}px)` }">
         <v-app-bar color="" density="compact">
             <template v-slot:prepend>
                 <v-app-bar-nav-icon @click="router.push('/')">
@@ -124,7 +133,9 @@ const { direction, isSwiping, lengthX, lengthY } = useSwipe(swipeTarget, {
 
             </template>
 
-            <v-app-bar-title>{{ videoData.title }} <span class='text-subtitle-2'>({{ currentVideoIdx+1 }} / {{ videoList.length }})</span></v-app-bar-title>
+            <v-app-bar-title>{{ videoData.title }} <span class='text-subtitle-2'>({{ currentVideoIdx + 1 }} / {{
+        videoList.length
+    }})</span></v-app-bar-title>
 
             <!-- <template v-slot:append>
                 <v-btn icon="mdi-dots-vertical"></v-btn>
@@ -153,7 +164,12 @@ const { direction, isSwiping, lengthX, lengthY } = useSwipe(swipeTarget, {
                 <v-icon icon="mdi-pause"></v-icon>
                 일시정지
             </v-btn>
-            <v-btn @click="fullscreenVideo">
+            <v-btn @click="onClickRepeat">
+                <v-icon v-if='videoRepeatOnce' icon="mdi-repeat-once"></v-icon>
+                <v-icon v-else icon="mdi-repeat"></v-icon>
+                반복
+            </v-btn>
+            <v-btn @click="onClickFullscreen">
                 <v-icon icon="mdi-fullscreen"></v-icon>
                 전체화면
             </v-btn>

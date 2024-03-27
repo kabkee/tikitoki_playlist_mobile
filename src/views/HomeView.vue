@@ -27,18 +27,15 @@ const { getVideosByTitles } = dataStore;
         <v-main>
             <v-container fluid>
                 <div v-for="(title, titleIdx) in videoTitles" :key="titleIdx">
-                    <div class="pl-3 mb-3 mt-4 text-subtitle-2">{{title}}</div>
+                    <div class="pl-3 mb-3 mt-4 text-subtitle-2">{{ title }}</div>
                     <div class="flex flex-wrap">
-                        <v-card class="mx-3 pb-3 w-2/5" elevated v-for="(video, videoIdx) in getVideosByTitles(title)"
-                            :key="videoIdx"
-                            @click="router.push(`/video/${videoIdx}`)"
-                        >
+                        <v-card class="mx-3 pb-3 w-2/5" elevated v-for="video in getVideosByTitles(title)"
+                            :key="video.index" @click="router.push(`/video/${video.index}`)">
                             <v-img height="120  px" :src="video.thumb" cover></v-img>
 
                             <v-card-text>
                                 {{ video.subTitle }}
                             </v-card-text>
-                            
                             <v-card-subtitle>
                                 {{ video.title }}
                             </v-card-subtitle>
